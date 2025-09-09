@@ -1,4 +1,4 @@
-diffusers
+diffusers @ git+https://github.com/huggingface/diffusers.git
 torch
 gradio
 accelerate
