@@ -40,7 +40,7 @@ def get_pipeline(model_name):
         pipeline = StableDiffusionXLPipeline.from_pretrained("glides/epicrealismxl", cache_dir=CACHE_DIR).to("cuda")
     elif model_name == "qwen":
         pipeline = DiffusionPipeline.from_pretrained(
-            "Qwen/Qwen-Image", scheduler=scheduler, torch_dtype=torch.bfloat16, cache_dir=CACHE_DIR
+            "Qwen/Qwen-Image", scheduler=scheduler, dtype=torch.bfloat16, cache_dir=CACHE_DIR
         ).to("cuda")
         pipeline.load_lora_weights(
             "lightx2v/Qwen-Image-Lightning", weight_name="Qwen-Image-Lightning-8steps-V1.0.safetensors", cache_dir=CACHE_DIR
@@ -51,19 +51,19 @@ def get_pipeline(model_name):
             raise gr.Error("Hugging Face token not found. Please attach the `huggingface-secret` to your Modal Notebook.")
 
         pipeline = QwenImageEditPipeline.from_pretrained(
-            "Qwen/Qwen-Image-Edit", scheduler=scheduler, torch_dtype=torch.bfloat16, cache_dir=CACHE_DIR, token=hf_token
+            "Qwen/Qwen-Image-Edit", scheduler=scheduler, dtype=torch.bfloat16, cache_dir=CACHE_DIR, token=hf_token
         ).to("cuda")
         
-        # Load the mandatory lightning LoRA
-        pipeline.load_lora_weights(
-            "lightx2v/Qwen-Image-Lightning", weight_name="Qwen-Image-Edit-Lightning-8steps-V1.0.safetensors", cache_dir=CACHE_DIR, adapter_name="lightning"
-        )
+        # Define all available LoRAs for this model
+        loras = {
+            "lightning": ("lightx2v/Qwen-Image-Lightning", "Qwen-Image-Edit-Lightning-8steps-V1.0.safetensors"),
+            "remove_clothing": ("ibuildproducts/loras", "qwen_image_edit_remove-clothing_v1.0.safetensors"),
+            "bumpy_nipples": ("ibuildproducts/loras", "bumpynipples1.safetensors"),
+            "pussy_lora": ("ibuildproducts/loras", "p0ssy_lora_v1.safetensors"),
+        }
 
-        # Load optional LoRAs
-        lora_repo = "ibuildproducts/loras"
-        pipeline.load_lora_weights(lora_repo, weight_name="qwen_image_edit_remove-clothing_v1.0.safetensors", cache_dir=CACHE_DIR, adapter_name="remove_clothing", token=hf_token)
-        pipeline.load_lora_weights(lora_repo, weight_name="bumpynipples1.safetensors", cache_dir=CACHE_DIR, adapter_name="bumpy_nipples", token=hf_token)
-        pipeline.load_lora_weights(lora_repo, weight_name="p0ssy_lora_v1.safetensors", cache_dir=CACHE_DIR, adapter_name="pussy_lora", token=hf_token)
+        for name, (repo, weight) in loras.items():
+            pipeline.load_lora_weights(repo, weight_name=weight, cache_dir=CACHE_DIR, adapter_name=name, token=hf_token)
 
     else:
         raise ValueError("Unknown model name")
@@ -80,16 +80,32 @@ def generate_qwen(prompt, negative_prompt, width, height, sample_steps):
     pipeline = get_pipeline("qwen")
     return pipeline(prompt=prompt, negative_prompt=negative_prompt, width=width, height=height, num_inference_steps=sample_steps, true_cfg_scale=1.0).images[0]
 
-def generate_qwen_edit(image, prompt, negative_prompt, sample_steps, lora_name, lora_strength):
+def generate_qwen_edit(image, prompt, negative_prompt, sample_steps, 
+                       lora1, strength1, lora2, strength2, lora3, strength3, lora4, strength4):
     if image is None:
         raise gr.Error("Please upload an image to edit.")
     pipeline = get_pipeline("qwen-edit")
 
+    # Build the list of active LoRAs and their strengths
+    active_loras = []
+    active_weights = []
+    
+    lora_selections = [(lora1, strength1), (lora2, strength2), (lora3, strength3), (lora4, strength4)]
+    
+    for name, strength in lora_selections:
+        if name != "None":
+            active_loras.append(name)
+            active_weights.append(strength)
+
     # Dynamically set the active LoRAs and their weights
-    if lora_name == "None":
-        pipeline.set_adapters(["lightning"], adapter_weights=[1.0])
+    if active_loras:
+        pipeline.set_adapters(active_loras, adapter_weights=active_weights)
+        # If any lora is active, we might need to reactivate the main adapter
+        pipeline.enable_lora()
     else:
-        pipeline.set_adapters(["lightning", lora_name], adapter_weights=[1.0, lora_strength])
+        # If no loras are selected, disable them all
+        pipeline.disable_lora()
+
 
     return pipeline(image=image, prompt=prompt, negative_prompt=negative_prompt, num_inference_steps=sample_steps, true_cfg_scale=4.0, generator=torch.manual_seed(0)).images[0]
 
@@ -120,7 +136,7 @@ with gr.Blocks() as interface:
                 with gr.Row():
                     with gr.Column():
                         prompt_qwen = gr.Textbox(label="Prompt", info="What do you want?", value="a tiny astronaut hatching from an egg on the moon, Ultra HD, 4K, cinematic composition.", lines=4, interactive=True)
-                        negative_prompt_qwen = gr.Textbox(label="Negative Prompt", info="What do you want to exclude from the image?", value=" ", lines=4, interactive=True)
+                        negative_prompt_qwen = gr.Textbox(label="Negative Prompt", info="What do you want to exclude from the image?", value=" ", lines=4, interactive=True, visible=False)
                     with gr.Column():
                         generate_button_qwen = gr.Button("Generate")
                         output_qwen = gr.Image()
@@ -138,31 +154,35 @@ with gr.Blocks() as interface:
             with gr.Row():
                 with gr.Column():
                     input_image_edit = gr.Image(type="pil", label="Input Image")
-                    prompt_edit = gr.Textbox(label="Prompt", info="What do you want to change?", value="Change the rabbit's color to purple, with a flash light background.", lines=3, interactive=True)
+                    prompt_edit = gr.Textbox(label="Prompt", info="What do you want to change?", value="A photo of a woman.", lines=3, interactive=True)
                     negative_prompt_edit = gr.Textbox(label="Negative Prompt", info="What do you want to exclude from the image?", value=" ", lines=3, interactive=True)
                     
-                    with gr.Accordion(label="Optional LoRA", open=True):
-                        lora_name_edit = gr.Dropdown(
-                            label="Select Optional LoRA", 
-                            choices=["None", "remove_clothing", "bumpy_nipples", "pussy_lora"], 
-                            value="None", 
-                            interactive=True
-                        )
-                        lora_strength_edit = gr.Slider(
-                            label="LoRA Strength", 
-                            info="Adjust the influence of the optional LoRA.", 
-                            value=1.0, 
-                            minimum=0.0, 
-                            maximum=2.0, 
-                            step=0.1, 
-                            interactive=True
-                        )
+                    lora_choices = ["None", "lightning", "remove_clothing", "bumpy_nipples", "pussy_lora"]
+                    
+                    with gr.Accordion(label="LoRA Configuration (Up to 4)", open=True):
+                        with gr.Row():
+                            lora1_name = gr.Dropdown(lora_choices, value="lightning", label="LoRA 1")
+                            lora1_strength = gr.Slider(0.0, 2.0, 1.0, label="Strength 1")
+                        with gr.Row():
+                            lora2_name = gr.Dropdown(lora_choices, value="None", label="LoRA 2")
+                            lora2_strength = gr.Slider(0.0, 2.0, 1.0, label="Strength 2")
+                        with gr.Row():
+                            lora3_name = gr.Dropdown(lora_choices, value="None", label="LoRA 3")
+                            lora3_strength = gr.Slider(0.0, 2.0, 1.0, label="Strength 3")
+                        with gr.Row():
+                            lora4_name = gr.Dropdown(lora_choices, value="None", label="LoRA 4")
+                            lora4_strength = gr.Slider(0.0, 2.0, 1.0, label="Strength 4")
 
-                    sampling_steps_edit = gr.Slider(label="Sampling Steps", info="The number of denoising steps.", value=8, minimum=1, maximum=20, step=1, interactive=True)
+
+                    sampling_steps_edit = gr.Slider(label="Sampling Steps", info="The number of denoising steps.", value=8, minimum=1, maximum=50, step=1, interactive=True)
                     generate_button_edit = gr.Button("Generate")
                 with gr.Column():
                     output_edit = gr.Image()
-            generate_button_edit.click(fn=generate_qwen_edit, inputs=[input_image_edit, prompt_edit, negative_prompt_edit, sampling_steps_edit, lora_name_edit, lora_strength_edit], outputs=[output_edit])
+            generate_button_edit.click(fn=generate_qwen_edit, 
+                                       inputs=[input_image_edit, prompt_edit, negative_prompt_edit, sampling_steps_edit, 
+                                               lora1_name, lora1_strength, lora2_name, lora2_strength, 
+                                               lora3_name, lora3_strength, lora4_name, lora4_strength], 
+                                       outputs=[output_edit])
 
 
 if __name__ == "__main__":
