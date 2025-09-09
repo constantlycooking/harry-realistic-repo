@@ -1,5 +1,6 @@
 Version History (Latest at Top):
 ----------------------------------------
+V6 | fixed bf16 realism | 09/09/25, 14:00:16 | Commit: 3faedfd
 V5 | added qwen test 2 | 09/09/25, 13:55:58 | Commit: 442c107
 V4 | added qwen test 1 | 09/09/25, 13:54:47 | Commit: f2da601
 V3 | removed psaces | 09/09/25, 13:22:44 | Commit: 174b33b

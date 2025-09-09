@@ -33,7 +33,17 @@ the `requirements.txt` file lists all the python packages needed for this projec
 
 to get this application running, follow these simple steps.
 
-### 1. set up your private repository
+### 1. create a persistent volume (one-time setup)
+
+to avoid re-downloading the large model files every time you start the notebook, you need to create a persistent storage volume on modal. you only need to do this once.
+
+run the following command in your local terminal (if you have the `modal` cli installed) or in a cell in a modal notebook:
+
+```bash
+modal volume create my-models-volume
+```
+
+### 2. set up your private repository
 
 this project is designed to be used with a private github repository.
 
@@ -44,7 +54,7 @@ this project is designed to be used with a private github repository.
     *   grant it the `repo` scope to allow access to your private repositories.
     *   copy the generated token.
 
-### 2. create a modal secret
+### 3. create a modal secret
 
 you need to store your github pat as a secret in modal so your notebook can access it securely.
 
@@ -58,24 +68,13 @@ alternatively, if you have the modal cli installed, you can run this command in 
 modal secret create github-token GITHUB_TOKEN="your_github_pat"
 ```
 
-### 3. run in a modal notebook
+### 4. run in a modal notebook
 
 now you're ready to run the application.
 
 1.  **create a new modal notebook**: go to [modal.com/notebooks](https://modal.com/notebooks) and create a new notebook.
 2.  **configure the kernel**: in the notebook's sidebar, make sure to select a gpu. any gpu will work.
-3.  **attach the secret**: in the sidebar, attach the `github-token` secret you created.
+3.  **attach the secret and volume**: in the sidebar, attach the `github-token` secret and the `my-models-volume` volume you created.
 4.  **run the code**: copy and paste the following code into a single cell in your notebook and run it:
 
-```bash
-%cd /root
-!rm -rf harry-realistic-repo
-!git clone https://${GITHUB_TOKEN}@github.com/constantlycooking/harry-realistic-repo.git
-%cd harry-realistic-repo
-
-%pip install -r requirements.txt
-
-!python app.py --share
 ```
-
-after running the cell, the necessary packages will be installed, and the gradio application will start. you'll see a public url in the output. click on that link to open the image generation interface in your browser.

@@ -2,6 +2,11 @@ import gradio as gr
 import torch
 from diffusers import StableDiffusionXLPipeline, DiffusionPipeline, FlowMatchEulerDiscreteScheduler
 import math
+import os
+
+# Define the cache directory for the models
+CACHE_DIR = "/mnt/my-models-volume"
+os.makedirs(CACHE_DIR, exist_ok=True)
 
 # Global variable to cache the pipeline
 pipeline_cache = None
@@ -13,7 +18,7 @@ def get_pipeline(model_name):
         return pipeline_cache
 
     if model_name == "epicrealism":
-        pipeline = StableDiffusionXLPipeline.from_pretrained("glides/epicrealismxl").to("cuda")
+        pipeline = StableDiffusionXLPipeline.from_pretrained("glides/epicrealismxl", cache_dir=CACHE_DIR).to("cuda")
     elif model_name == "qwen":
         scheduler_config = {
             "base_image_seq_len": 256,
@@ -33,10 +38,10 @@ def get_pipeline(model_name):
         }
         scheduler = FlowMatchEulerDiscreteScheduler.from_config(scheduler_config)
         pipeline = DiffusionPipeline.from_pretrained(
-            "Qwen/Qwen-Image", scheduler=scheduler, torch_dtype=torch.bfloat16
+            "Qwen/Qwen-Image", scheduler=scheduler, torch_dtype=torch.bfloat16, cache_dir=CACHE_DIR
         ).to("cuda")
         pipeline.load_lora_weights(
-            "lightx2v/Qwen-Image-Lightning", weight_name="Qwen-Image-Lightning-8steps-V1.0.safetensors"
+            "lightx2v/Qwen-Image-Lightning", weight_name="Qwen-Image-Lightning-8steps-V1.0.safetensors", cache_dir=CACHE_DIR
         )
     else:
         raise ValueError("Unknown model name")
