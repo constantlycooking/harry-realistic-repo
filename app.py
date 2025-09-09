@@ -55,8 +55,9 @@ def get_pipeline(model_name):
             raise gr.Error("Hugging Face token not found. Please attach the `huggingface-secret` to your Modal Notebook.")
 
         pipeline = QwenImageEditPipeline.from_pretrained(
-            "Qwen/Qwen-Image-Edit", scheduler=scheduler, dtype=torch.bfloat16, cache_dir=CACHE_DIR, token=hf_token
+            "Qwen/Qwen-Image-Edit", scheduler=scheduler, cache_dir=CACHE_DIR, token=hf_token
         ).to("cuda")
+        pipeline.to(torch.bfloat16)
         
         # Define all available LoRAs for this model
         loras = {

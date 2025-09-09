@@ -1,5 +1,6 @@
 Version History (Latest at Top):
 ----------------------------------------
+V14 | added batch and auto saving | 09/09/25, 16:20:57 | Commit: 2c5ef7e
 V13 | added multi lora feature | 09/09/25, 15:30:15 | Commit: 721e281
 V12 | added clothing loras | 09/09/25, 15:07:28 | Commit: d072b0a
 V11 | added clothing loras | 09/09/25, 15:07:21 | Commit: 35326ea
