@@ -36,7 +36,7 @@ def get_pipeline(model_name):
             "Qwen/Qwen-Image", scheduler=scheduler, torch_dtype=torch.bfloat16
         ).to("cuda")
         pipeline.load_lora_weights(
-            "lightx2v/Qwen-Image-Lightning", weight_name="Qwen-Image-Lightning-8steps-V1.1.safetensors"
+            "lightx2v/Qwen-Image-Lightning", weight_name="Qwen-Image-Lightning-8steps-V1.0.safetensors"
         )
     else:
         raise ValueError("Unknown model name")
