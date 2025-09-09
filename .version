@@ -1,5 +1,6 @@
 Version History (Latest at Top):
 ----------------------------------------
+V8 | added qwen edit | 09/09/25, 14:14:37 | Commit: 564e14e
 V7 | added volumes | 09/09/25, 14:05:09 | Commit: 8583110
 V6 | fixed bf16 realism | 09/09/25, 14:00:16 | Commit: 3faedfd
 V5 | added qwen test 2 | 09/09/25, 13:55:58 | Commit: 442c107
