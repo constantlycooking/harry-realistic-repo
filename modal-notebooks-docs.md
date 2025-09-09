@@ -203,3 +203,134 @@ The product is in beta, and we're planning to make a lot of improvements over th
   - Sync with Git repositories
 
 Let us know via [Slack](/slack) if you have any feedback.
+
+
+# Introducing Notebooks
+
+[Back](https://modal.com/blog)
+News
+
+September 9, 2025•5 minute read
+
+**Modal Notebooks** is a collaborative environment for high-performance interactive computing. It lets you explore data, run code, and test ideas in a shared editor. This is powered by a GPU-enabled Python kernel that launches in seconds on Modal’s AI infrastructure.
+
+In most cloud notebooks, kernels take minutes to start, environments aren’t preserved, idle sessions waste money, and you’re stuck on oversized GPU instances. Modal Notebooks removes these points of friction, so you can focus on cutting-edge work.
+
+After a limited beta last month, Notebooks are now generally available to all Modal customers.
+
+A better way to iterate on code and research
+--------------------------------------------
+
+“
+
+Modal Notebooks have been incredible for sharing ML research across Suno. Engineers and designers can start playing with cutting-edge models within minutes after training runs are completed.
+
+”
+
+— Victor Tao,ML Research Engineer
+
+Today, tens of millions of end-users interact with applications built on Modal, from AI-generated music at [Suno](https://suno.com/), to payments at [Ramp](https://ramp.com/), to consumer apps like [Lovable](https://lovable.dev/) and [Substack](https://substack.com/).
+
+Notebooks represent a new way to develop with Modal. They are designed for research and experimentation—not just writing code, but _rapidly developing and refining ideas_ with your team. We believe this process is an important part of AI development and deserves equally good tooling as full-scale production workflows.
+
+Features include:
+
+*   **Fast time-to-first-cell.** Cold-start to ready in _less than 5 seconds_, on arbitrary container images and hardware ranging up to 256 vCPUs and 8 H100/B200 GPUs. Switch GPU type just as easily.
+*   **No zombie boxes.** Kernels auto-idle and resume, so you only pay for when they’re running (configurable if you need control).
+*   **One environment.** Access the same Volumes (distributed storage), Secrets, and deployed Functions as the rest of your Modal Apps.
+*   **True collaborative editing.** Share live sessions with your team like in Google Docs—no more emailing `.ipynb` files around or suddenly seeing your code & outputs disappear after a delayed refresh.
+
+Modal has already redefined how teams run and scale jobs in production. Notebooks aim to bring our core developer experience principles to the exploratory side of AI work.
+
+What you can do
+---------------
+
+### Start instantly. Scale on demand.
+
+*   Run from as little as **0.125 CPUs** up to **8 Nvidia A100/H100/B200 GPUs**.
+
+_With CPU, you can also burst above configured resource usage and only pay for active compute cycles._
+
+*   Bring a **custom image** or work from a curated AI base image.
+
+_Modal’s content-addressed FUSE filesystem caches packages and loads them on demand, so kernels boot quickly even with large images._
+
+*   Automatic idle-shutdown with fast resume (manual control is also available).
+
+### Work together in real time
+
+*   Multiple cursors, live presence, and seamless collaborative editing.
+*   Share within your workspace with fine-grained permissions.
+*   Use Jupyter Widgets to prototype and share interactive apps, which most other cloud notebook platforms don’t support.
+
+### Use your Modal stack, directly
+
+*   Attach **Volumes** (persistent storage) and **Secrets** from the UI; browse files inline or upload them via drag-and-drop. Volumes can store terabytes of data with relaxed consistency and are multi-writer accessible from around the world.
+
+_Because Volumes and Secrets are shared across the workspace, you get reproducible results no matter who is running the notebook._
+
+![Image 1: File viewer screenshot](https://modal-cdn.com/nb-assets-sept-8/filesystem-viewer.png)
+
+*   **Call Modal Functions** from any cell without extra authentication.
+
+*   Reuse the **same images and runtime primitives** you already deploy in production.
+
+### Modern dev experience (LSP + AI)
+
+*   **Pyright** language server for completions, types, and diagnostics.
+*   **AI completions** when you’re exploring what to try next.
+*   Rich HTML outputs for plots/media in libraries like Altair, Seaborn, Plotly, and py3Dmol.
+
+Industry usage of Notebooks
+---------------------------
+
+During our short beta in August, **over 5,000 accounts** adopted Notebooks in their daily workflows, running **200,000 code cells** with instant startup and real-time collaboration. Early adopters included leading AI research and product startups—teams that need to move quickly from training to production.
+
+Here’s what some of them had to say:
+
+“
+
+Testing different GPUs on the fly has massively accelerated our workflow for profiling models. Tasks that used to take days now take minutes.
+
+”
+
+— Simran Makariye,ML Engineer
+
+“
+
+Other platforms like Colab didn't have the capacity we needed. We love how Modal Notebooks lets us scale up any amount of GPUs and compute.
+
+”
+
+— Arda Göreci,Co-founder & CTO
+
+“
+
+Honestly, one of the best experiences I’ve had for casual and exploratory coding. The ability to live-swap hardware specs—including top-tier GPUs, and even multiple ones—is next-level. Super smooth and really fun to use.
+
+”
+
+— Stefano Giomo
+
+“
+
+We used to spend hours just setting up access and dealing with surprise costs. With Modal Notebooks, I set up a research environment for our intern and could give feedback on his experiment in real time.
+
+”
+
+— Alice Yu,Co-Founder & CEO @ OncoCardia
+
+And while today marks general availability, we’re already thinking ahead. Upcoming features include:
+
+*   **Memory snapshots** to suspend and later resume execution, while preserving variables and files.
+*   **One-click export** of notebook code into Modal Apps.
+*   **Scheduled runs and edit history** for better reproducibility.
+
+Try it today, with $30 free credits
+-----------------------------------
+
+For the Modal team, Notebooks have become our default surface for experiments and collaborative work. Our hope is that their speed, usability, and compute flexibility enable researchers to work together and bring simpler, better products into the world.
+
+Check out some of our featured examples:
+
+[See the docs](https://modal.com/docs/guide/notebooks-modal) for more, or [send us feedback on Slack](https://modal.com/slack).

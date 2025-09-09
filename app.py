@@ -12,6 +12,9 @@ OUTPUT_DIR = "/mnt/my-models-volume/outputs"
 os.makedirs(CACHE_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+# Define the maximum dimension for input images
+MAX_DIMENSION = 1024
+
 # Global variable to cache the pipeline
 pipeline_cache = None
 current_model_name = None
@@ -111,6 +114,10 @@ def generate_qwen_edit(image_files, prompt, negative_prompt, sample_steps,
     output_images = []
     for image_file in image_files:
         input_image = Image.open(image_file.name).convert("RGB")
+
+        # Automatically resize large images while maintaining aspect ratio
+        if max(input_image.width, input_image.height) > MAX_DIMENSION:
+            input_image.thumbnail((MAX_DIMENSION, MAX_DIMENSION))
         
         # Generate the new image
         output_image = pipeline(image=input_image, prompt=prompt, negative_prompt=negative_prompt, num_inference_steps=sample_steps, true_cfg_scale=4.0, generator=torch.manual_seed(0)).images[0]
@@ -169,6 +176,7 @@ with gr.Blocks() as interface:
             with gr.Row():
                 with gr.Column():
                     input_image_edit = gr.File(label="Upload Images", file_count="multiple", file_types=["image"])
+                    gr.Markdown("ℹ️ *Images larger than 1024x1024 will be automatically resized to improve performance.*")
                     prompt_edit = gr.Textbox(label="Prompt", info="What do you want to change?", value="A photo of a woman.", lines=3, interactive=True)
                     negative_prompt_edit = gr.Textbox(label="Negative Prompt", info="What do you want to exclude from the image?", value=" ", lines=3, interactive=True)
                     
