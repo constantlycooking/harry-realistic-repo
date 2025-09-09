@@ -1,12 +1,10 @@
 import gradio as gr
-import spaces
 
 import torch
 from diffusers import StableDiffusionXLPipeline
 
 pipeline = StableDiffusionXLPipeline.from_pretrained("glides/epicrealismxl").to("cuda")
 
-@spaces.GPU
 def generate(prompt, negative_prompt, width, height, sample_steps):
     return pipeline(prompt=prompt, negative_prompt=negative_prompt, width=width, height=height, num_inference_steps=sample_steps).images[0]
 

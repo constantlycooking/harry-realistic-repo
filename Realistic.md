@@ -6,7 +6,6 @@
 # Requirements
 
 !pip install -r requirements.txt
-!pip install spaces
 
 
 # Main
