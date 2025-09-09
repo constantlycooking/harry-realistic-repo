@@ -13,7 +13,7 @@ def get_pipeline(model_name):
         return pipeline_cache
 
     if model_name == "epicrealism":
-        pipeline = StableDiffusionXLPipeline.from_pretrained("glides/epicrealismxl", torch_dtype=torch.float16, variant="fp16").to("cuda")
+        pipeline = StableDiffusionXLPipeline.from_pretrained("glides/epicrealismxl").to("cuda")
     elif model_name == "qwen":
         scheduler_config = {
             "base_image_seq_len": 256,
