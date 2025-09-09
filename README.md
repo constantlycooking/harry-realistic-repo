@@ -51,6 +51,7 @@ The user has a strong and repeated preference that you **do not write or edit `.
 5.  **Remind User of Modal Setup**: When providing the final instructions, always remind the user of the manual setup steps required in the Modal Notebook UI:
     *   Select a GPU.
     *   Attach the `github-token` secret.
+    *   Attach the `huggingface-secret`.
     *   Attach the `my-models-volume` volume.
 
 By following this guide, you will be able to interact with this repository in the user's preferred manner, ensuring a smooth and efficient workflow.
