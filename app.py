@@ -3,10 +3,14 @@ import torch
 from diffusers import StableDiffusionXLPipeline, DiffusionPipeline, FlowMatchEulerDiscreteScheduler, QwenImageEditPipeline
 import math
 import os
+from datetime import datetime
+from PIL import Image
 
-# Define the cache directory for the models
-CACHE_DIR = "/mnt/my-models-volume"
+# Define the cache and output directories within the volume
+CACHE_DIR = "/mnt/my-models-volume/models"
+OUTPUT_DIR = "/mnt/my-models-volume/outputs"
 os.makedirs(CACHE_DIR, exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Global variable to cache the pipeline
 pipeline_cache = None
@@ -80,34 +84,44 @@ def generate_qwen(prompt, negative_prompt, width, height, sample_steps):
     pipeline = get_pipeline("qwen")
     return pipeline(prompt=prompt, negative_prompt=negative_prompt, width=width, height=height, num_inference_steps=sample_steps, true_cfg_scale=1.0).images[0]
 
-def generate_qwen_edit(image, prompt, negative_prompt, sample_steps, 
+def generate_qwen_edit(image_files, prompt, negative_prompt, sample_steps, 
                        lora1, strength1, lora2, strength2, lora3, strength3, lora4, strength4):
-    if image is None:
-        raise gr.Error("Please upload an image to edit.")
+    if not image_files:
+        raise gr.Error("Please upload at least one image to edit.")
+    
     pipeline = get_pipeline("qwen-edit")
-
-    # Build the list of active LoRAs and their strengths
+    
+    # Build the list of active LoRAs and their strengths from the UI
     active_loras = []
     active_weights = []
-    
     lora_selections = [(lora1, strength1), (lora2, strength2), (lora3, strength3), (lora4, strength4)]
-    
     for name, strength in lora_selections:
         if name != "None":
             active_loras.append(name)
             active_weights.append(strength)
 
-    # Dynamically set the active LoRAs and their weights
+    # Set the adapters for the entire batch
     if active_loras:
         pipeline.set_adapters(active_loras, adapter_weights=active_weights)
-        # If any lora is active, we might need to reactivate the main adapter
         pipeline.enable_lora()
     else:
-        # If no loras are selected, disable them all
         pipeline.disable_lora()
 
+    output_images = []
+    for image_file in image_files:
+        input_image = Image.open(image_file.name).convert("RGB")
+        
+        # Generate the new image
+        output_image = pipeline(image=input_image, prompt=prompt, negative_prompt=negative_prompt, num_inference_steps=sample_steps, true_cfg_scale=4.0, generator=torch.manual_seed(0)).images[0]
+        
+        # Save the generated image to the persistent volume
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+        filename = f"{OUTPUT_DIR}/{timestamp}.png"
+        output_image.save(filename)
+        
+        output_images.append(output_image)
 
-    return pipeline(image=image, prompt=prompt, negative_prompt=negative_prompt, num_inference_steps=sample_steps, true_cfg_scale=4.0, generator=torch.manual_seed(0)).images[0]
+    return output_images
 
 
 with gr.Blocks() as interface:
@@ -153,7 +167,7 @@ with gr.Blocks() as interface:
         with gr.TabItem("qwen-image-edit + lightning"):
             with gr.Row():
                 with gr.Column():
-                    input_image_edit = gr.Image(type="pil", label="Input Image")
+                    input_image_edit = gr.File(label="Upload Images", file_count="multiple", file_types=["image"])
                     prompt_edit = gr.Textbox(label="Prompt", info="What do you want to change?", value="A photo of a woman.", lines=3, interactive=True)
                     negative_prompt_edit = gr.Textbox(label="Negative Prompt", info="What do you want to exclude from the image?", value=" ", lines=3, interactive=True)
                     
@@ -177,7 +191,7 @@ with gr.Blocks() as interface:
                     sampling_steps_edit = gr.Slider(label="Sampling Steps", info="The number of denoising steps.", value=8, minimum=1, maximum=50, step=1, interactive=True)
                     generate_button_edit = gr.Button("Generate")
                 with gr.Column():
-                    output_edit = gr.Image()
+                    output_edit = gr.Gallery(label="Generated Images", show_label=True, elem_id="gallery")
             generate_button_edit.click(fn=generate_qwen_edit, 
                                        inputs=[input_image_edit, prompt_edit, negative_prompt_edit, sampling_steps_edit, 
                                                lora1_name, lora1_strength, lora2_name, lora2_strength, 
